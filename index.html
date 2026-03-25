@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的數位名片盒 - 曾子倫</title>
+    <style>
+        /* === 基礎樣式與變數 === */
+        :root {
+            --bg-color: #f4f7f6;
+            /* 初始背景顏色 */
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --accent-color: #3498db;
+            /* 藍色調，適合理工專業 */
+            --hover-color: #2980b9;
+            --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.5s ease;
+            /* 背景色變換動畫 */
+            overflow-x: hidden;
+            /* 防止照片飛出去產生捲軸 */
+        }
+
+        /* === 名片容器 === */
+        .card-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            /* 確保名片始終在背景之上 */
+        }
+
+        /* === 大頭照樣式與互動 === */
+        .avatar-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 30px auto;
+            /* 📍 稍微增加下方距離，給提示文字空間 */
+            cursor: pointer;
+            z-index: 20;
+            /* 確保滑鼠容易偵測到 */
+        }
+
+        /* === 📍 新增：頭像提示氣泡樣式 === */
+        .avatar-container::after {
+            content: "碰頭像有驚喜! ✨";
+            /* 提示文字 */
+            position: absolute;
+            bottom: -35px;
+            /* 在圓形下方 */
+            left: 50%;
+            transform: translateX(-50%);
+            /* 水平居中 */
+            background-color: rgba(52, 152, 219, 0.9);
+            /* 藍色背景，帶透明度 */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            /* 確保文字不換行 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            /* 確保滑鼠穿過它，直接觸發圓形頭像 */
+
+            /* 加入閃爍動畫 */
+            animation: hintPulse 2s infinite;
+
+            /* 預設可見，但當照片飛出去時隱藏 */
+            transition: opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        /* 📍 新增：當照片飛出去時，隱藏提示氣泡 === */
+        .avatar-container:has(.runaway)::after {
+            opacity: 0;
+        }
+
+        /* 📍 新增：閃爍動畫定義 === */
+        @keyframes hintPulse {
+            0% {
+                transform: translateX(-50%) scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-50%) scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, top 0.3s ease, left 0.3s ease;
+            /* 加入移動動畫 */
+
+            /* 圖片網址更新 */
+            background-image: url('https://lh3.googleusercontent.com/d/1La9TQw9GSymiCnc80FsaHknBJkkmvZPT');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* === 📍 修正：確保照片飛出去時，依然保持固定大小 === */
+        .avatar.runaway {
+            position: fixed;
+            /* 使用 fixed 防止跑出螢幕 */
+            pointer-events: auto;
+            /* 確保依然能觸發 mouseover */
+
+            /* 強制指定 fixed 定位時的大小，防止其還原成圖片原始巨大解析度 */
+            width: 150px !important;
+            height: 150px !important;
+            z-index: 999;
+            /* 確保它在最上層，不會被名片擋住 */
+        }
+
+        /* === 文字內容 === */
+        .name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .bio {
+            font-size: 1rem;
+            text-align: justify;
+            margin-bottom: 30px;
+            color: #555;
+            padding: 0 10px;
+        }
+
+        /* === 按鈕區域 === */
+        .social-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 按鈕特定顏色 */
+        .btn-github {
+            background-color: #333;
+            /* Github 黑色 */
+        }
+
+        .btn-github:hover {
+            background-color: #555;
+        }
+
+        .btn-instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            /* IG 漸層 */
+        }
+
+        .btn-instagram:hover {
+            opacity: 0.9;
+        }
+
+        .btn-gmail {
+            background-color: #d44638;
+            /* Gmail 紅色 */
+        }
+
+        .btn-gmail:hover {
+            background-color: #e55345;
+        }
+
+        /* === Gmail 按鈕觸碰特效 (JS 觸發) === */
+        .btn-gmail.clicked {
+            animation: pulse 0.5s linear;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+                background-color: #b5372a;
+            }
+
+            100% {
+                transform: scale(1);
+                background-color: #d44638;
+            }
+        }
+
+        /* Gmail 顯示區域 */
+        #email-display {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #d44638;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            word-wrap: break-word;
+        }
+
+        #email-display.show {
+            opacity: 1;
+        }
+
+        /* === 背景換色小提示 === */
+        .hint {
+            position: fixed;
+            bottom: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #888;
+            pointer-events: none;
+            /* 不會干擾點擊 */
+            z-index: 1;
+        }
+
+        /* === 響應式設計 (手機) === */
+        @media (max-width: 600px) {
+            .card-container {
+                padding: 30px 20px;
+            }
+
+            .name {
+                font-size: 2rem;
+            }
+
+            .bio {
+                font-size: 0.95rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body id="body-bg">
+
+    <div class="card-container">
+        <div class="avatar-container" id="avatar-box">
+            <div class="avatar" id="avatar-img"></div>
+        </div>
+
+        <h1 class="name">曾子倫</h1>
+
+        <p class="bio">
+            我是 曾子倫，目前已錄取 陽明交通大學智慧系統與應用研究所。大學期間深耕於
+            嵌入式系統與智慧感測領域，具備紮實的專題研究經驗與軟硬整合能力。透過專題研究成果，曾獲得多名全國性競賽獎項，並擁有多場國內外學術與產業展覽經驗。於2026 年代表參加「瑞士日內瓦國際發明展」獲得銀牌與特別獎。
+        </p>
+
+        <div class="social-links">
+            <a href="https://github.com/Alan93224?tab=repositories" target="_blank" class="btn btn-github">Github
+                專案倉庫</a>
+            <a href="https://www.instagram.com/alan93224?igsh=Z2lyOW1jbDV2Nzhy&utm_source=qr" target="_blank"
+                class="btn btn-instagram">Instagram</a>
+
+            <button class="btn btn-gmail" id="gmail-btn">聯絡 Gmail</button>
+            <p id="email-display">alan93224@gmail.com</p>
+        </div>
+
+        <div class="hint">點擊名片外空白處可更換背景顏色 😉</div>
+    </div>
+    <script>
+        // === 1. 互動：點擊背景會換顏色 ===
+        const bodyBg = document.getElementById('body-bg');
+
+        // 預設一些柔和的顏色組合
+        const colors = [
+            '#f4f7f6', // 預設
+            '#e3f2fd', // 淺藍
+            '#e8f5e9', // 淺綠
+            '#fff3e0', // 淺橙
+            '#f3e5f5', // 淺紫
+            '#ffebee'  // 淺紅
+        ];
+
+        let currentColorIndex = 0;
+
+        bodyBg.addEventListener('click', function (e) {
+            // 確保點擊的是 body 本身，而不是名片卡片內部的東西
+            if (e.target === bodyBg || e.target.classList.contains('hint')) {
+                currentColorIndex = (currentColorIndex + 1) % colors.length;
+                bodyBg.style.backgroundColor = colors[currentColorIndex];
+            }
+        });
+
+
+        // === 2. 互動：滑鼠移到照片上照片會隨機跑到其他位置 ===
+        const avatarBox = document.getElementById('avatar-box');
+        const avatarImg = document.getElementById('avatar-img');
+
+        // 當滑鼠移入時
+        avatarBox.addEventListener('mouseover', function () {
+            // 添加跑路樣式 (變更定位為 fixed)
+            avatarImg.classList.add('runaway');
+
+            // 計算隨機位置 (扣除照片大小，避免跑出螢幕)
+            const imgSize = 150;
+            const padding = 20;
+
+            // 視窗的寬高
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            // 計算可用區域
+            const maxX = windowWidth - imgSize - padding;
+            const maxY = windowHeight - imgSize - padding;
+
+            // 生成隨機座標
+            const randomX = Math.random() * maxX + padding / 2;
+            const randomY = Math.random() * maxY + padding / 2;
+
+            // 應用新的位置
+            avatarImg.style.left = randomX + 'px';
+            avatarImg.style.top = randomY + 'px';
+        });
+
+        // (可選) 點擊名字或名片區域，照片回到原位
+        document.querySelector('.card-container').addEventListener('click', function (e) {
+            if (e.target.closest('.avatar-container')) return; // 點到照片不歸位
+
+            if (avatarImg.classList.contains('runaway')) {
+                avatarImg.classList.remove('runaway');
+                avatarImg.style.left = 'auto';
+                avatarImg.style.top = 'auto';
+            }
+        });
+
+
+        // === 3. 按鈕互動：Gmail 按鈕效應與顯示 ===
+        const gmailBtn = document.getElementById('gmail-btn');
+        const emailDisplay = document.getElementById('email-display');
+
+        gmailBtn.addEventListener('click', function () {
+            // 加入點擊特效 class
+            gmailBtn.classList.add('clicked');
+
+            // 顯示 Email
+            emailDisplay.classList.add('show');
+
+            // 0.5秒後移除特效 class (方便下次點擊)
+            setTimeout(() => {
+                gmailBtn.classList.remove('clicked');
+            }, 500);
+
+            // (可選) 自動複製 Email 到剪貼簿
+            navigator.clipboard.writeText('alan93224@gmail.com').then(() => {
+                // 如果需要，可以在這裡加入「已複製」的小提示
+                console.log('Email copied to clipboard');
+            });
+        });
+
+    </script>
+</body>
+
+</html>
